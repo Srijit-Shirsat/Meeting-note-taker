@@ -61,14 +61,14 @@ def process_meeting(meeting_id: int, db: Session = Depends(get_db)):
         config = {"configurable": {"thread_id": f"transcription_{meeting_id}"}}
 
         system_prompt = SystemMessage(content="""
-            You are a professional transcription agent. 
-            Your task is to listen to the provided audio and return a complete, 
-            word-for-word transcription. Do not summarize; provide the full text.
+            You are a professional note taker agent. 
+            Your task is to listen to the provided audio of meeting and return a 
+            complete structured notes, action items, key discussion points, and attendee summaries
         """)
         
         user_prompt = HumanMessage(
             content=[
-                {"type": "text", "text": "Please transcribe this audio file."},
+                {"type": "text", "text": "Please take notes of this audio file."},
                 {
                     "type": "media", 
                     "mime_type": "audio/mpeg", 
