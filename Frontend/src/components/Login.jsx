@@ -1,7 +1,30 @@
-import { useState } from 'react'
-import { auth } from '../config/firebase'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+
+/**
+ * REFINED NEURAL NODE COMPONENT
+ * Medium-sized, glowing data points that drift across the background.
+ */
+const ConnectionNode = ({ delay, x, y }) => (
+  <motion.div
+    initial={{ opacity: 0, left: `${x}vw`, top: `${y}vh` }}
+    animate={{ 
+      opacity: [0, 0.7, 0], 
+      y: [0, -40, 0],       
+      scale: [1, 1.3, 1]    
+    }}
+    transition={{ 
+      duration: 7 + Math.random() * 3, 
+      repeat: Infinity, 
+      delay: delay, 
+      ease: "easeInOut" 
+    }}
+    className="fixed w-[3px] h-[3px] bg-indigo-400 rounded-full shadow-[0_0_10px_#818cf8] z-0"
+  />
+);
 
 function LoginForm() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -9,83 +32,89 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Generate 40 nodes with the FAST START FIX (max 2s delay)
+  const nodes = [...Array(40)].map((_, i) => ({
+    id: i,
+    delay: Math.random() * 2, // Dots show up much faster now
+    x: Math.random() * 100, 
+    y: Math.random() * 100 
+  }));
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
-    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!emailValid.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-    if (!formData.password) newErrors.password = "Password is required";
+    setLoading(true);
+    setErrors({});
 
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setLoading(true);
-      try {
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        navigate('/dashboard');
-      } catch (err) {
-        setErrors({ auth: "Invalid email or password. Please try again." });
-      } finally {
-        setLoading(false);
-      }
+    try {
+      // Firebase Sign In
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      // Success: Redirect to Dashboard
+      navigate('/dashboard'); 
+    } catch (err) {
+      setErrors({ auth: "Invalid email or password. Please try again." });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-      <h2 className="text-3xl font-bold text-white mb-2 text-center">
-        Welcome Back
-      </h2>
-      <p className="text-indigo-200/60 text-center mb-10 text-sm">Log in to manage your AI notes</p>
+    <div className="absolute inset-0 flex items-center justify-center p-4">
+      {/* BACKGROUND LAYER: Neural Nodes */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {nodes.map(node => (
+          <ConnectionNode key={node.id} delay={node.delay} x={node.x} y={node.y} />
+        ))}
+      </div>
 
-      {errors.auth && (
-        <p className="text-red-400 text-sm mb-6 text-center bg-red-950/30 p-2 rounded-lg border border-red-500/20">
-          {errors.auth}
+      {/* FOREGROUND LAYER: The Auth Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-md bg-slate-900/40 backdrop-blur-3xl border border-white/10 p-10 rounded-[40px] shadow-2xl mx-4"
+      >
+        <h2 className="text-4xl font-bold text-white mb-2 text-center tracking-tight">Welcome Back</h2>
+        <p className="text-indigo-200/40 text-center mb-10 text-[10px] font-bold uppercase tracking-[0.3em]">
+          Access Your Insights
         </p>
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-indigo-200 mb-2">
-            Email Address
-          </label>
-          <input 
-            type="email" name="email" value={formData.email} onChange={handleChange}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest px-1">Email</label>
+            <input 
+              type="email" name="email" value={formData.email} onChange={handleChange} disabled={loading}
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none text-white focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-slate-600"
+              placeholder="name@company.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest px-1">Password</label>
+            <input 
+              type="password" name="password" value={formData.password} onChange={handleChange} disabled={loading}
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none text-white focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-slate-600"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
             disabled={loading}
-            className={`w-full px-4 py-3 bg-white/5 border rounded-xl outline-none transition-all text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 ${errors.email ? 'border-red-500/50' : 'border-white/10'}`}
-            placeholder="name@company.com"
-          />
-          {errors.email && <p className="text-red-400 text-xs mt-2 font-medium">{errors.email}</p>}
-        </div>
+            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {loading ? "logging in...." : "Login"}
+          </button>
 
-        <div>
-          <label className="block text-sm font-medium text-indigo-200 mb-2">
-            Password
-          </label>
-          <input 
-            type="password" name="password" value={formData.password} onChange={handleChange}
-            disabled={loading}
-            className={`w-full px-4 py-3 bg-white/5 border rounded-xl outline-none transition-all text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 ${errors.password ? 'border-red-500/50' : 'border-white/10'}`}
-            placeholder="••••••••"
-          />
-          {errors.password && <p className="text-red-400 text-xs mt-2 font-medium">{errors.password}</p>}
-        </div>
-
-        <button 
-          disabled={loading}
-          className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all duration-300 disabled:opacity-50 mt-2">
-          {loading ? "Signing in..." : "Login"}
-        </button>
-      </form>
+          {errors.auth && (
+            <p className="text-red-400 text-[10px] text-center mt-4 bg-red-950/20 p-2 rounded-lg border border-red-500/10">
+              {errors.auth}
+            </p>
+          )}
+        </form>
+      </motion.div>
     </div>
   );
 }
