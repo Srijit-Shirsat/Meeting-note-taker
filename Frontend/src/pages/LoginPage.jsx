@@ -18,8 +18,6 @@ function LoginPage() {
             <LoginForm />
           </div>
         </main>
-        
-        <FooterComponent />
       </div>
     </div>
   );

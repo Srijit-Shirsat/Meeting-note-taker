@@ -10,7 +10,7 @@ function NavbarComponent() {
                 </div>
                 <h1 className="font-bold text-xl tracking-tight">
                     <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Syntheia
+                        Syntheia AI
                     </span>
                 </h1>
             </div>
